@@ -598,7 +598,7 @@ def reg(cc):
 stopuser = {}
 
 
-token =  "8271496108:AAFsmefu5x1ssE9xxI3a_WlmkSV1X2RQKxI"
+token =  "8271496108:AAEEoJk1JRs0i9814hFNX2VGea85r4hpQ8c"
 bot = telebot.TeleBot(token, parse_mode="HTML")
 admin = 6680915317
 HIT_CHAT_ID = -1002282577225
