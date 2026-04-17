@@ -1584,10 +1584,10 @@ def buy_points(message):
     # خيارات الشراء: النقاط وعدد النجوم
     options = [
         {"points": 250, "stars": 20},
-        {"points": 550, "stars": 90},
-        {"points": 1000, "stars": 170},
-        {"points": 5000, "stars": 300},
-        {"points": 10000, "stars": 550}
+        {"points": 700, "stars": 40},
+        {"points": 1600, "stars": 90},
+        {"points": 4000, "stars": 190},
+        {"points": 10000, "stars": 390}
     ]
     
     for opt in options:
