@@ -480,7 +480,7 @@ def stripe_checker(ccx):
     add_payment_url = f"{base_url}/my-account/add-payment-method/"
     
     headers = {
-        'authority': 'https://mussacanaria.com',
+        'authority': 'https://belgraviaenterprise.com',
         'user-agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36',
     }
     try:
