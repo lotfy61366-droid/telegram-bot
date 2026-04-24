@@ -476,7 +476,7 @@ def stripe_checker(ccx):
     if "20" in yy:
         yy = yy.split("20")[1]
     session = requests.Session()
-    base_url = "https://aspiredancecny.com"
+    base_url = "https://eliyland.co.uk"
     add_payment_url = f"{base_url}/my-account/add-payment-method/"
     
     headers = {
